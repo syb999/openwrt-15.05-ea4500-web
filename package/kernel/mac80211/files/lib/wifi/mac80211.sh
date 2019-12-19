@@ -9,10 +9,11 @@ lookup_phy() {
 	local devpath
 	config_get devpath "$device" path
 	[ -n "$devpath" ] && {
-		for phy in $(ls /sys/class/ieee80211 2>/dev/null); do
-			case "$(readlink -f /sys/class/ieee80211/$phy/device)" in
-				*$devpath) return;;
-			esac
+		for _phy in /sys/devices/$devpath/ieee80211/phy*; do
+			[ -e "$_phy" ] && {
+				phy="${_phy##*/}"
+				return
+			}
 		done
 	}
 
@@ -81,6 +82,8 @@ detect_mac80211() {
 		htmode=""
 		ht_capab=""
 
+		ssnm=_$(cat /sys/class/ieee80211/${dev}/macaddress | sed 's/.[0-9A-Fa-f]:.[0-9A-Fa-f]:.[0-9A-Fa-f]:\(.[0-9A-Fa-f]\):\(.[0-9A-Fa-f]\):\(.[0-9A-Fa-f]\)/\1\2\3/g' | tr :[a-z] :[A-Z])
+
 		iw phy "$dev" info | grep -q 'Capabilities:' && htmode=HT20
 		iw phy "$dev" info | grep -q '2412 MHz' || { mode_band="a"; channel="36"; }
 
@@ -109,22 +112,38 @@ detect_mac80211() {
 			dev_id="	option macaddr	$(cat /sys/class/ieee80211/${dev}/macaddress)"
 		fi
 
+		if [ x$mode_band == x"g" ]; then
+			ssid_wlan="_2.4G"
+		else
+			ssid_wlan="_5G"
+		fi
+
 		cat <<EOF
 config wifi-device  radio$devidx
 	option type     mac80211
 	option channel  ${channel}
 	option hwmode	11${mode_band}
+	option txpower 20
+	option country CN
+	option legacy_rates 0
 $dev_id
 $ht_capab
 	# REMOVE THIS LINE TO ENABLE WIFI:
-	option disabled 1
+	option disabled 0
 
 config wifi-iface
 	option device   radio$devidx
 	option network  lan
 	option mode     ap
-	option ssid     OpenWrt
+	option ssid     OpenWrt${ssid_wlan}${ssnm}
 	option encryption none
+	option disassoc_low_ack 0
+	option isolate 0
+	option signal_connect -95
+	option signal_stay -100
+	option signal_strikes 3
+	option signal_poll_time 5
+	option signal_drop_reason 3
 
 EOF
 	devidx=$(($devidx + 1))
