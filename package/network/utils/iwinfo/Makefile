@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2010-2016 Jo-Philipp Wich <jow@openwrt.org>
+# Copyright (C) 2010-2016 Jo-Philipp Wich <jo@mein.io>
 #
 # This is free software, licensed under the GPL 2 license.
 #
@@ -7,22 +7,24 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libiwinfo
-PKG_VERSION:=2016-01-25
-PKG_RELEASE=$(PKG_SOURCE_VERSION)
+PKG_VERSION:=2019-10-16
+PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL=$(OPENWRT_GIT)/project/iwinfo.git
+PKG_SOURCE_URL=http://git.openwrt.org/project/iwinfo.git
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=e4aca3910dff532ed878d0ceaf1ab6e8ad7719bf
+PKG_SOURCE_VERSION:=07315b6fdb2566a8626d8a1e4de76eb30456fe17
+PKG_MIRROR_HASH:=924914a51b8a668779e41dc2f40adfc1ae51846ea8b013de3e45999b4d04eecd
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
-PKG_MAINTAINER:=Jo-Philipp Wich <jow@openwrt.org>
+PKG_MAINTAINER:=Jo-Philipp Wich <jo@mein.io>
 PKG_LICENSE:=GPL-2.0
+
+PKG_FLAGS := nonshared
 
 PKG_CONFIG_DEPENDS := \
 	CONFIG_PACKAGE_kmod-brcm-wl \
 	CONFIG_PACKAGE_kmod-brcm-wl-mini \
 	CONFIG_PACKAGE_kmod-brcm-wl-mimo \
-	CONFIG_PACKAGE_kmod-madwifi \
 	CONFIG_PACKAGE_kmod-cfg80211
 
 include $(INCLUDE_DIR)/package.mk
@@ -32,13 +34,13 @@ define Package/libiwinfo
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=Generalized Wireless Information Library (iwinfo)
-  DEPENDS:=+PACKAGE_kmod-cfg80211:libnl-tiny +libuci
-  ABI_VERSION:=$(PKG_RELEASE)
+  DEPENDS:=+PACKAGE_kmod-cfg80211:libnl-tiny +libuci +libubus
+  ABI_VERSION:=20181126
 endef
 
 define Package/libiwinfo/description
   Wireless information library with consistent interface for proprietary Broadcom,
-  madwifi, nl80211 and wext driver interfaces.
+  nl80211 and wext driver interfaces.
 endef
 
 
@@ -75,7 +77,6 @@ IWINFO_BACKENDS := \
 	$(if $(CONFIG_PACKAGE_kmod-brcm-wl),wl) \
 	$(if $(CONFIG_PACKAGE_kmod-brcm-wl-mini),wl) \
 	$(if $(CONFIG_PACKAGE_kmod-brcm-wl-mimo),wl) \
-	$(if $(CONFIG_PACKAGE_kmod-madwifi),madwifi) \
 	$(if $(CONFIG_PACKAGE_kmod-cfg80211),nl80211)
 
 TARGET_CFLAGS += \
